@@ -13,7 +13,7 @@ const urlDatabase = {
 };
 
 const generateRandomString = function() {
-  return Math.random().toString(36).substring(6);
+  return Math.random().toString(36).substring(6, 12);
 };
 
 // landing page route
@@ -58,10 +58,20 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+//delete url from database
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
+
+//edit url and update database
+app.post("/urls/:shortURL",(req,res)=>{
+  const longURL = req.body.newURL;
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect("/urls");
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
