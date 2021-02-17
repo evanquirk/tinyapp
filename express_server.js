@@ -1,11 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -21,21 +23,36 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+//get cookies
+app.get('/', function (req, res) {
+  // Cookies that have not been signed
+  console.log('Cookies: ', req.cookies);
+  // Cookies that have been signed
+  console.log('Signed Cookies: ', req.signedCookies);
+});
+
 // urls page route - check database
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
 // new url page route
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
 // short url view route - pull long url from database
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL, longURL };
+  const templateVars = { shortURL, longURL , username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
@@ -45,9 +62,19 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// test route for database
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect("/urls");
+  //set a cookie to username (value in the request body)
+  //redirect back to /urls page
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+  //set a cookie to username (value in the request body)
+  //redirect back to /urls page
 });
 
 // add new url to database and redirect to show short url page
