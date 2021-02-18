@@ -27,6 +27,7 @@
     "stable": "^0.1.8"
   },
   "devDependencies": {
+    "eslint": "^7.20.0",
     "nodemon": "^2.0.7"
   }
 }
