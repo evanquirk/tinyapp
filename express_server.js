@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-const { generateRandomString , checkEmail } = require('./helper');
+const { generateRandomString , checkEmail } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
@@ -25,6 +25,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "123": {
+    id: "123",
+    email: "test@test.ca",
+    password: "123"
   }
 };
 
@@ -60,6 +65,15 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  const user = users[req.cookies["user_id"]];
+  const templateVars = {
+    urls: urlDatabase,
+    user
+  };
+  res.render("urls_login", templateVars);
+});
+
 // new url page route
 app.get("/urls/new", (req, res) => {
   const user = users[req.cookies["user_id"]];
@@ -86,12 +100,13 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  const { body: { email, password } } = req;
   const rID = generateRandomString();
-  users[rID] = {id: rID, email: req.body.email, password: req.body.password };
-
-  if (!req.body.email || !req.body.password || checkEmail(req.body.email, users)) {
-    res.status(400); res.send("Bad Gateway. No Email Or Password, or Email in use.");
+  
+  if (!email || !password || checkEmail(email, users)) {
+    res.status(400).send("Bad Gateway. No Email Or Password, or Email in use.");
   } else {
+    users[rID] = {id: rID, email, password };
     res.cookie("user_id", rID);
     res.redirect("/urls");
     console.log(users[rID]);
@@ -100,10 +115,49 @@ app.post("/register", (req, res) => {
 
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
-  //set a cookie to username (value in the request body)
-  //redirect back to /urls page
+  const { body: { email, password } } = req;
+
+  const findEmail = (email, users) => {
+    for (const key in users) {
+      if (users[key].email === email) {
+        return users[key]
+      }
+    }
+  }
+
+  const authenticateUser = (password, user) => {
+    if (user.password === password) {
+      return user.id
+    }
+  }
+
+  const validEmail = findEmail(email, users)
+
+  if (validEmail) {
+    const userId = authenticateUser(password, validEmail)
+    if (userId) {
+      res.cookie("user_id", userId)
+      res.redirect("/urls")
+    } else {
+      res.status(403).send("Invalid Password.");
+    }
+
+  } else {
+    res.status(403).send("Invalid Email");
+  }
+
+  // for (const user in users) {
+  //   if (users[user].email === email) {
+  //     if (users[user].password === password) {
+  //       res.cookie("user_id", users[user].id);
+  //       res.redirect("/urls");
+  //     } else {
+  //       res.status(403).send("Invalid Password.");
+  //     }
+  //   } else {
+  //     res.status(403).send("Invalid Email");
+  //   }
+  // }
 });
 
 app.post("/logout", (req, res) => {
