@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const express = require("express");
 const { generateRandomString, getUserByEmail } = require('./helpers');
+const { urlDatabase, users } = require('./databases');
 
 
 const app = express();
@@ -19,36 +20,6 @@ app.use(
   })
 );
 
-// URL DATABASE//
-
-const urlDatabase = {
-  b2xVn2: { 
-    longURL: "http://www.lighthouselabs.ca", 
-    userID: "123" },
-  '9sm5xK': { 
-    longURL: "http://www.google.com", 
-    userID: "userRandomID" }
-};
-
-// USERS DATABASE //
-
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  },
-  "123": {
-    id: "123",
-    email: "test@test.ca",
-    password: "123"
-  }
-};
 
 
 //==============LANDING PAGE REDIRECT ================//
