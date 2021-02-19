@@ -1,14 +1,19 @@
+const bcrypt = require('bcryptjs');
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
-const { generateRandomString , checkEmail } = require('./helpers');
+const cookieSession = require('cookie-session');
+const { generateRandomString, checkEmail } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'session',
+  keys: [/*secret keys */]
+  maxAge: 24 * 60 * 60 * 1000
+}));
 
 const urlDatabase = {
   b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "123" },
@@ -36,15 +41,20 @@ const users = {
 //==============LANDING================//
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
+  //   if //logged in; {
+  //     res.redirect("/urls");
+  //   if //!logged in {
+  //     res.redirect("/login");
+  //   }
 });
 
 //==============COOKIES================//
 
-app.get('/', function(req, res) {
-  console.log('Cookies: ', req.cookies);
-  console.log('Signed Cookies: ', req.signedCookies);
-});
+// app.get("/", (req, res) => {
+//   console.log('Cookies: ', req.cookies);
+//   console.log('Signed Cookies: ', req.signedCookies);
+// });
 
 //==============URLS INDEX===============//
 
@@ -56,7 +66,7 @@ app.get("/urls", (req, res) => {
     for (const key in urlDatabase) {
       if (urlDatabase[key].userID === req.cookies["user_id"]) {
         userURLS[key] = urlDatabase[key];
-      };
+      }
     }
     const templateVars = {
       urls: userURLS,
@@ -95,12 +105,12 @@ app.get("/login", (req, res) => {
 app.get("/urls/new", (req, res) => {
   if (req.cookies["user_id"]) {
     const user = users[req.cookies["user_id"]];
-    
+
     const templateVars = {
       urls: urlDatabase,
       user
     };
-  
+
     res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
@@ -113,7 +123,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   const user = users[req.cookies["user_id"]];
-  const templateVars = { shortURL, longURL , user };
+  const templateVars = { shortURL, longURL, user };
   res.render("urls_show", templateVars);
 });
 
@@ -123,19 +133,31 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+
+//POST REQUESTS*****************************************************************
+
+
 app.post("/register", (req, res) => {
   const { body: { email, password } } = req;
   const rID = generateRandomString();
-  
+
   if (!email || !password || checkEmail(email, users)) {
     res.status(400).send("Bad Gateway. No Email Or Password, or Email in use.");
   } else {
-    users[rID] = {id: rID, email, password };
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    console.log(hashedPassword);
+    users[rID] = {
+      id: rID,
+      password: hashedPassword,
+      email
+    };
     res.cookie("user_id", rID);
     res.redirect("/urls");
     console.log(users[rID]);
+
   }
 });
+
 
 
 app.post("/login", (req, res) => {
@@ -173,8 +195,6 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
-  //set a cookie to username (value in the request body)
-  //redirect back to /urls page
 });
 
 // add new url to database and redirect to show short url page
@@ -184,13 +204,13 @@ app.post("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
 
   urlDatabase[shortURL] = { userID, longURL };
-  
+
   res.redirect(`/urls/${shortURL}`);
 });
 
 //============== EDIT URL ===============//
 
-app.post("/urls/:shortURL",(req,res)=>{
+app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.newURL;
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL].userID === req.cookies["user_id"]) {
@@ -211,7 +231,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.redirect("/urls");
   }
 });
-
 
 //============== APP LISTEN =============//
 app.listen(PORT, () => {
