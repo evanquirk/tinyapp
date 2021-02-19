@@ -41,7 +41,7 @@ app.get("/urls", (req, res) => {
 //==============REGISTER================//
 
 app.get("/register", (req, res) => {
-  const userID = req.session.user_id
+  const userID = req.session.user_id;
   if (cookieHasUser(userID, userDB)) {
     res.redirect("/urls");
   } else {
@@ -55,7 +55,7 @@ app.get("/register", (req, res) => {
 //================LOGIN=================//
 
 app.get("/login", (req, res) => {
-  const userID = req.session.user_id
+  const userID = req.session.user_id;
   if (cookieHasUser(userID, userDB)) {
     res.redirect("/urls");
   } else {
@@ -69,45 +69,37 @@ app.get("/login", (req, res) => {
 //===============NEW URL================//
 
 app.get("/urls/new", (req, res) => {
-  if (req.session.user_id) {
-    const userID = req.session.user_id;
-    const shortURL = req.params.shortURL;
+  const userID = req.session.user_id;
+  const shortURL = req.params.shortURL
+  if (!cookieHasUser(userID, userDB)) {
+    res.redirect("/login");
+  } else {
     const templateVars = {
-
-      urls: urlDB,
       user: userDB[userID],
       shortURL,
     };
-
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
+    res.render("urls_new", templateVars)
   }
 });
 
-// short url view route - pull long url from database
+//=========SHORT URL VIEW EDIT============//
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userID = req.session.user_id;
-  if (req.session.user_id && urlDB[req.params.shortURL]) {
-    if (userID !== urlDB[req.params.shortURL].userID) {
-        res.status(403).send('Not correct user!');
-    } else {
-      const shortURL = req.params.shortURL;
-      const longURL = urlDB[shortURL].longURL;
-      const templateVars = { 
-        user_id: userID,
-        urls: urlDB,
-        user: userDB[userID],
-        shortURL, 
-        longURL 
-      };
+  if (urlDB[req.params.shortURL]) {
+    let templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDB[req.params.shortURL].longURL,
+      userID: urlDB[req.params.shortURL].userID,
+      user: userDB[req.session.user_id]
+    };
     res.render("urls_show", templateVars);
+    } else {
+      res.status(404).send("Not Found")
     }
-  } else {
-    res.status(401).send("Please login to continue.")
-  }
-});
+  });
+
+
+//=======VISIT SHORT URL AS LINK=======//
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
