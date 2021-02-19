@@ -1,14 +1,12 @@
-const bcrypt = require('bcryptjs');
-const bodyParser = require("body-parser");
-const cookieSession = require('cookie-session');
 const express = require("express");
-const { generateRandomString, getUserByEmail , emailHasUser, usersURLs , cookieHasUser } = require('./helpers');
+const cookieSession = require('cookie-session');
+const bodyParser = require("body-parser");
+const bcrypt = require('bcryptjs');
 const { urlDB, userDB } = require('./databases');
-
+const { generateRandomString, getUserByEmail , emailHasUser, usersURLs , cookieHasUser } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
-
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,7 +17,6 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000
   })
 );
-
 
 //==========LANDING PAGE REDIRECT ========//
 
@@ -41,17 +38,19 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-
 //==============REGISTER================//
 
 app.get("/register", (req, res) => {
-  let userID = req.session.user_id;
-  let templateVars = {
-    user_id: req.session.user_id,
-    urls: urlDB,
-    user: userDB[userID],
-  };
-  res.render("urls_register", templateVars);
+  const userID = req.session.user_id
+  console.log('req:',req.session.user_id);
+  if (cookieHasUser(userID, userDB)) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = {
+      user: userDB[userID],
+    };
+    res.render("urls_register", templateVars);
+  }
 });
 
 //================LOGIN=================//
