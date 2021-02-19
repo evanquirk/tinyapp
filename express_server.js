@@ -42,7 +42,6 @@ app.get("/urls", (req, res) => {
 
 app.get("/register", (req, res) => {
   const userID = req.session.user_id
-  console.log('req:',req.session.user_id);
   if (cookieHasUser(userID, userDB)) {
     res.redirect("/urls");
   } else {
@@ -56,13 +55,15 @@ app.get("/register", (req, res) => {
 //================LOGIN=================//
 
 app.get("/login", (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.user_id
+  if (cookieHasUser(userID, userDB)) {
+    res.redirect("/urls");
+  } else {
   const templateVars = {
-    user_id: req.session.user_id,
-    urls: urlDB,
     user: userDB[userID]
   };
   res.render("urls_login", templateVars);
+  }
 });
 
 //===============NEW URL================//
