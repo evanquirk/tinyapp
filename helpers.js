@@ -4,8 +4,8 @@ const generateRandomString = function() {
 };
 
 
-//Truthy Value
-const checkEmail = (email, users) => {
+//Truthy Value Return if Email Has User Associated With It
+const emailHasUser = (email, users) => {
   for (let user in users) {
     if (users[user].email === email) {
       return true;
@@ -14,7 +14,7 @@ const checkEmail = (email, users) => {
   return false;
 };
 
-//Actual value
+//Get ID associated with an email address.
 const getUserByEmail = (email, users) => {
   for (const userID in users) {
     if (users[userID].email === email) {
@@ -23,5 +23,25 @@ const getUserByEmail = (email, users) => {
   }
 };
 
+//Get list of URLs associated with a users id
+const usersURLs = (id, urlDatabase) => {
+  const userUrls = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
+}
 
-module.exports = { generateRandomString , checkEmail , getUserByEmail };
+//Check to see if the current cookie has a user associated with it.
+const cookieHasUser = (cookie, users) => {
+  for (const user in users) {
+    if (cookie === user) {
+      return true;
+    }
+  } return false;
+};
+
+
+module.exports = { generateRandomString , emailHasUser , getUserByEmail, usersURLs , cookieHasUser};
