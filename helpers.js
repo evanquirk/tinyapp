@@ -1,6 +1,4 @@
 
-// const bcrypt = xrequire('bcryptjs');
-
 const generateRandomString = function() {
   return Math.random().toString(36).substring(6, 12);
 };
@@ -17,13 +15,13 @@ const checkEmail = (email, users) => {
 };
 
 //Actual value
-const findEmail = (email, users) => {
-  for (const key in users) {
-    if (users[key].email === email) {
-      return users[key];
+const getUserByEmail = (email, users) => {
+  for (const userID in users) {
+    if (users[userID].email === email) {
+      return users[userID];
     }
   }
 };
 
 
-module.exports = { generateRandomString , checkEmail , findEmail };
+module.exports = { generateRandomString , checkEmail , getUserByEmail };
