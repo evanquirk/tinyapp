@@ -24,11 +24,11 @@ const getUserByEmail = (email, users) => {
 };
 
 //Get list of URLs associated with a users id
-const usersURLs = (id, urlDatabase) => {
+const usersURLs = (id, urlDB) => {
   const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
+  for (const shortURL in urlDB) {
+    if (urlDB[shortURL].userID === id) {
+      userUrls[shortURL] = urlDB[shortURL];
     }
   }
   return userUrls;
