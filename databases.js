@@ -1,6 +1,6 @@
 // URL DATABASE//
 
-const urlDatabase = {
+const urlDB = {
   b2xVn2: { 
     longURL: "http://www.lighthouselabs.ca", 
     userID: "123" },
@@ -10,4 +10,4 @@ const urlDatabase = {
 
 const users = {};
 
-module.exports = { urlDatabase, users };
+module.exports = { urlDB, users };
