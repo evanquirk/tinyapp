@@ -111,11 +111,13 @@ app.get("/login", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   if (req.session.user_id) {
-    const user = req.session.user_id;
-
+    const userID = req.session.user_id;
+    const shortURL = req.params.shortURL;
     const templateVars = {
+
       urls: urlDatabase,
-      user
+      user: users[userID],
+      shortURL,
     };
 
     res.render("urls_new", templateVars);
@@ -128,19 +130,23 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
-  const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  if (userID !== urlDatabase[req.params.shortURL].userID) {
-    res.status(403).send('Not correct user!');
-  } else {
-    const templateVars = { 
-      user_id: userID,
-      urls: urlDatabase,
-      user: users[userID],
-      shortURL, 
-      longURL 
-    };
+  if (req.session.user_id) {
+    if (userID !== urlDatabase[req.params.shortURL].userID) {
+        res.status(403).send('Not correct user!');
+    } else {
+      const shortURL = req.params.shortURL;
+      const longURL = urlDatabase[shortURL].longURL;
+      const templateVars = { 
+        user_id: userID,
+        urls: urlDatabase,
+        user: users[userID],
+        shortURL, 
+        longURL 
+      };
     res.render("urls_show", templateVars);
+    }
+  } else {
+    res.status(401).send("Please login to continue.")
   }
 });
 
@@ -160,7 +166,7 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password ) {
-    res.status(400).send("Must fill both email and password fields");
+    res.status(400).send("Must fill both email and password fields.");
   }
   for (key in users) {
     if (users[key].email === email) {
@@ -180,15 +186,14 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const { body: { email, password } } = req;
   let user = getUserByEmail(email, users);
-  console.log(user);
   if (!user) {
-    res.status(403).send("Email is not recognized");
+    res.status(400).send("Email is not recognized");
   } else {
     if (bcrypt.compareSync(password, user.password)) {
       req.session.user_id = user['id'];
       res.redirect("/urls");
     } else {
-      res.status(403).send("Password is not recognized");
+      res.status(400).send("Password is not recognized");
     }
   }
 });
@@ -207,7 +212,7 @@ app.post("/urls", (req, res) => {
 
   urlDatabase[shortURL] = { userID, longURL };
 
-  res.redirect(`/urls/${shortURL}`);
+  res.redirect("/urls");
 });
 
 //============== EDIT URL ===============//
@@ -217,7 +222,7 @@ app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL].userID === req.session.user_id) {
     urlDatabase[shortURL].longURL = longURL;
-    res.redirect("/urls");
+    res.redirect(`/urls/${shortURL}`);
   } else {
     res.redirect("/login");
   }
