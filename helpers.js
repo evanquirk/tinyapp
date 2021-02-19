@@ -5,9 +5,9 @@ const generateRandomString = function() {
 
 
 //Truthy Value Return if Email Has User Associated With It
-const emailHasUser = (email, users) => {
-  for (let user in users) {
-    if (users[user].email === email) {
+const emailHasUser = (email, userDB) => {
+  for (let user in userDB) {
+    if (userDB[user].email === email) {
       return true;
     }
   }
@@ -17,8 +17,8 @@ const emailHasUser = (email, users) => {
 //Get ID associated with an email address.
 const getUserByEmail = (email, userDB) => {
   for (const userID in userDB) {
-    if (users[userID].email === email) {
-      return users[userID];
+    if (userDB[userID].email === email) {
+      return userDB[userID];
     }
   }
 };
