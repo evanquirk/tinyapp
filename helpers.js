@@ -15,8 +15,8 @@ const emailHasUser = (email, users) => {
 };
 
 //Get ID associated with an email address.
-const getUserByEmail = (email, users) => {
-  for (const userID in users) {
+const getUserByEmail = (email, userDB) => {
+  for (const userID in userDB) {
     if (users[userID].email === email) {
       return users[userID];
     }
@@ -35,8 +35,8 @@ const usersURLs = (id, urlDB) => {
 }
 
 //Check to see if the current cookie has a user associated with it.
-const cookieHasUser = (cookie, users) => {
-  for (const user in users) {
+const cookieHasUser = (cookie, userDB) => {
+  for (const user in userDB) {
     if (cookie === user) {
       return true;
     }

@@ -8,6 +8,6 @@ const urlDB = {
 
 // USERS DATABASE //
 
-const users = {};
+const userDB = {};
 
-module.exports = { urlDB, users };
+module.exports = { urlDB, userDB };
