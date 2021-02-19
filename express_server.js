@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
-const { generateRandomString, checkEmail } = require('./helpers');
+const { generateRandomString, getUserByEmail } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
@@ -41,6 +41,7 @@ const users = {
 //==============LANDING================//
 
 app.get("/", (req, res) => {
+  
   res.redirect("/urls");
   //   if //logged in; {
   //     res.redirect("/urls");
@@ -82,7 +83,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/register", (req, res) => {
   console.log(req.session.user_id);
-  const user = users[req.session["user_id"]];
+  const user = users[req.session.user_id];
   const templateVars = {
     urls: urlDatabase,
     user
@@ -141,57 +142,40 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   const { body: { email, password } } = req;
   const rID = generateRandomString();
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
-  if (!email || !password || checkEmail(email, users)) {
-    res.status(400).send("Bad Gateway. No Email Or Password, or Email in use.");
-  } else {
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    console.log(hashedPassword);
-    users[rID] = {
-      id: rID,
-      password: hashedPassword,
-      email
-    };
-    req.session.user_id = rID;
-    res.redirect("/urls");
-    console.log(users[rID]);
-
+  if (!email || !password ) {
+    res.status(400).send("Must fill both email and password fields");
   }
-});
-
-
+  for (key in users) {
+    if (users[key].email === email) {
+      res.status(400).send("Email is already registered.");
+    }
+  }; 
+  users[rID] = {
+    id: rID,
+    password: hashedPassword,
+    email
+  };
+  req.session.user_id = rID;
+  res.redirect("/urls");
+  }
+);
 
 app.post("/login", (req, res) => {
   const { body: { email, password } } = req;
-
-  const findEmail = (email, users) => {
-    for (const key in users) {
-      if (users[key].email === email) {
-        return users[key];
-      }
-    }
-  };
-
-  const authenticateUser = (password, user) => {
-    if (user.password === password) {
-      return user.id;
-    }
-  };
-
-  const validEmail = findEmail(email, users);
-
-  if (validEmail) {
-    const userId = authenticateUser(password, validEmail);
-    if (userId) {
-      res.session.user_id = userId;
+  let user = getUserByEmail(email, users);
+  if (!user) {
+    res.status(403).send("Email is not recognized");
+  }
+    if (bcrypt.compareSync(password, user.password)) {
+      req.session.user_id = user.id;
       res.redirect("/urls");
     } else {
-      res.status(403).send("Invalid Password.");
+      res.status(403).send("wrong password or email.");
     }
-  } else {
-    res.status(403).send("Invalid Email");
-  }
-});
+  });
+  
 
 app.post("/logout", (req, res) => {
   req.session = null;
