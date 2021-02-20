@@ -111,9 +111,9 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   if (req.params.shortURL === urlDB[req.params.shortURL]) {
-  const shortURL = req.params.shortURL;
-  const longURL = urlDB[shortURL].longURL;
-  res.redirect(longURL);
+    const shortURL = req.params.shortURL;
+    const longURL = urlDB[shortURL].longURL;
+    res.redirect(longURL);
   } else {
     res.status(404).send("This link cannot be found! Major bummer.")
   }
@@ -204,7 +204,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
       delete urlDB[shortURL];
       res.redirect('/urls');
     } else {
-    res.status(401).send("This is not your URL. Sign into associated account to delete this URL, you murderer.")
+      res.status(401).send("This is not your URL. Sign into associated account to delete this URL, you murderer.")
     };
   } else {
     res.status(404).send("Short URL Not Found! Slow your dang fingers down and learn how to type!")

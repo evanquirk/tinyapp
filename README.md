@@ -6,8 +6,8 @@ Tiny App is a basic web application for shortening long URLs down to smaller one
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Ye Good Ol' Login Page"](https://github.com/evanquirk/tinyapp/blob/master/docs/Login.png?raw=true)
+!["The URL Page In All Of It's Glory"](https://github.com/evanquirk/tinyapp/blob/master/docs/urls-page.png?raw=true)
 
 ## Dependencies
 
