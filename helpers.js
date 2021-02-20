@@ -1,14 +1,14 @@
 
 
 //Generate Random 6 String Key for Short URL
-const generateRandomString = function() {
+const generateRandomString = function () {
   return Math.random().toString(36).substring(6, 12);
 };
 
 
 //Truthy Value will return if email has user associated with it.
 const emailHasUser = (email, userDB) => {
-  for (let user in userDB) {
+  for (const user in userDB) {
     if (userDB[user].email === email) {
       return true;
     }
@@ -38,12 +38,12 @@ const usersURLs = (id, urlDB) => {
 
 //Check to see if the current cookie has a user associated with it.
 const cookieHasUser = (cookie, userDB) => {
-  for (const user in userDB) {
-    if (cookie === user) {
+  for (const userKey in userDB) {
+    if (cookie === userKey) {
       return true;
     }
   } return false;
 };
 
 
-module.exports = { generateRandomString , emailHasUser , getUserByEmail, usersURLs , cookieHasUser};
+module.exports = { generateRandomString, emailHasUser, getUserByEmail, usersURLs, cookieHasUser };
