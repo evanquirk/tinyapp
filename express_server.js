@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 const { urlDB, userDB } = require('./databases');
 const { generateRandomString, getUserByEmail, emailHasUser, usersURLs, cookieIsCurrentUser } = require('./helpers');
+const e = require("express");
 
 const app = express();
 const PORT = 8080;
@@ -38,7 +39,7 @@ app.get("/urls", (req, res) => {
     }
     res.render("urls_index", templateVars);
   } else {
-    res.status(401).send("Youre not logged in, but you can do that <a href='/login'>here!</a>")
+    res.status(401).send("Youre not logged in. No biggie, everyone is forgetful sometimes. You can login <a href='/login'>here!</a>")
   }
 });
 
@@ -89,8 +90,8 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const cookieID = req.session.user_id;
 
-  if (cookieID === urlDB[shortURL].userID) {
-    if (urlDB[req.params.shortURL]) {
+  if (urlDB[req.params.shortURL]) {
+    if (cookieID === urlDB[shortURL].userID) {
       let templateVars = {
         shortURL: req.params.shortURL,
         longURL: urlDB[req.params.shortURL].longURL,
@@ -99,19 +100,23 @@ app.get("/urls/:shortURL", (req, res) => {
       };
       res.render("urls_show", templateVars);
     } else {
-      res.status(404).send("Short URL Not Found!")
+      res.status(401).send("This is not your URL. Why ya gotta try and mess with it!? Please sign into the associated account to edit this URL.")
     }
   } else {
-    res.status(401).send("This is not your URL. Please sign into the associated account to edit this URL.")
+    res.status(404).send("Short URL Not Found! Slow your dang fingers down and learn how to type!")
   }
 });
 
 //=======VISIT SHORT URL AS LINK=======//
 
 app.get("/u/:shortURL", (req, res) => {
+  if (req.params.shortURL === urlDB[req.params.shortURL]) {
   const shortURL = req.params.shortURL;
   const longURL = urlDB[shortURL].longURL;
   res.redirect(longURL);
+  } else {
+    res.status(404).send("This link cannot be found! Major bummer.")
+  }
 });
 
 
@@ -123,9 +128,9 @@ app.post("/register", (req, res) => {
   const newPassword = req.body.password;
 
   if (!newEmail || !newPassword) {
-    res.status(400).send("Please include a valid email and password'")
+    res.status(400).send("Please include a valid email and password. Or don't. I'm a website, not a cop.'")
   } else if (emailHasUser(newEmail, userDB)) {
-    res.status(400).send("Account already associated with this email address.")
+    res.status(400).send("Account already associated with this email address. Go make a new one, they are free.")
   } else {
     const newUserID = generateRandomString();
     userDB[newUserID] = {
@@ -144,7 +149,7 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (!emailHasUser(email, userDB)) {
-    res.status(403).send("there is no account associated with this email address.")
+    res.status(403).send("there is no account associated with this email address - so make a new one and join in on all the fun!")
   } else {
     const userID = getUserByEmail(email, userDB);
     if (!bcrypt.compareSync(password, userDB[userID].password)) {
@@ -169,7 +174,7 @@ app.post("/urls", (req, res) => {
     }
     res.redirect(`/urls/${shortURL}`);
   } else {
-    res.status(401).send("Log in to create a short URL.");
+    res.status(401).send("Log in to create a short URL. Everybody is doing it.");
   }
 });
 
@@ -184,7 +189,7 @@ app.post("/urls/:shortURL", (req, res) => {
     res.redirect('/urls');
 
   } else {
-    res.status(401).send("This is not your URL. Sign into associated account to edit this URL.")
+    res.status(401).send("This is not your URL. And with that attitude, it'll never be your URL. - Sign into associated account to edit.")
   }
 });
 
@@ -194,13 +199,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   const cookieID = req.session.user_id;
 
-  if (cookieID === urlDB[shortURL].userID) {
-    delete urlDB[shortURL];
-    res.redirect('/urls');
-
+  if (urlDB[req.params.shortURL]) {
+    if (cookieID === urlDB[shortURL].userID) {
+      delete urlDB[shortURL];
+      res.redirect('/urls');
+    } else {
+    res.status(401).send("This is not your URL. Sign into associated account to delete this URL, you murderer.")
+    };
   } else {
-    res.status(401).send("This is not your URL. Sign into associated account to delete this URL.")
-  }
+    res.status(404).send("Short URL Not Found! Slow your dang fingers down and learn how to type!")
+  };
 });
 
 //============== LOGOUT==============//
