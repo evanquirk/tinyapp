@@ -1,10 +1,12 @@
 
+
+//Generate Random 6 String Key for Short URL
 const generateRandomString = function() {
   return Math.random().toString(36).substring(6, 12);
 };
 
 
-//Truthy Value Return if Email Has User Associated With It
+//Truthy Value will return if email has user associated with it.
 const emailHasUser = (email, userDB) => {
   for (let user in userDB) {
     if (userDB[user].email === email) {
@@ -23,7 +25,7 @@ const getUserByEmail = (email, userDB) => {
   }
 };
 
-//Get list of URLs associated with a users id
+//Get list of URLs associated with a users id.
 const usersURLs = (id, urlDB) => {
   const userUrls = {};
   for (const shortURL in urlDB) {
