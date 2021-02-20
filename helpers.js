@@ -18,7 +18,7 @@ const emailHasUser = (email, userDB) => {
 const getUserByEmail = (email, userDB) => {
   for (const userID in userDB) {
     if (userDB[userID].email === email) {
-      return userDB[userID];
+      return userDB[userID].id;
     }
   }
 };
