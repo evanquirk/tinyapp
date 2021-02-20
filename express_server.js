@@ -147,29 +147,24 @@ app.post("/login", (req, res) => {
     }
   }
 });
-  
 
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/login");
-});
 
-// add new url to database and redirect to show short url page
+//========= ADD NEW URL TO DATABASE =========//
+
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   const userID = req.session.user_id;
-
   urlDB[shortURL] = { userID, longURL };
-
+  
   res.redirect("/urls");
 });
 
-//============== EDIT URL ===============//
+//=============== EDIT URL ================//
 
 app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.newURL;
-  const shortURL = req.params.shortURL;
+  const shortURL = req.params.idL;
   if (urlDB[shortURL].userID === req.session.user_id) {
     urlDB[shortURL].longURL = longURL;
     res.redirect(`/urls/${shortURL}`);
@@ -177,16 +172,25 @@ app.post("/urls/:shortURL", (req, res) => {
     res.redirect("/login");
   }
 });
-//=============== DELETE ===============//
+//================ DELETE =================//
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
-  if (urlDB[shortURL].userID === req.session.user_id) {
-    delete urlDB[req.params.shortURL];
-    res.redirect("/urls");
+  const userID = req.session.user_id;
+  const userUrls = usersURLs(userID, urlDB);
+  if (Object.keys(userUrls).includes(req.params.shortURL)) {
+    const shortURL = req.params.shortURL;
+    delete urlDB[shortURL];
+    red.redirect('/urls');
   } else {
-    res.redirect("/urls");
+    res.status(401).send("This is not your URL. Sign into associated account to delete this shortURL.")
   }
+});
+
+//============== LOGOUT==============//
+
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/login");
 });
 
 //============== APP LISTEN =============//
