@@ -131,6 +131,8 @@ app.post("/register", (req, res) => {
   }
 });
 
+//============== LOGIN ===============//
+
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -152,26 +154,34 @@ app.post("/login", (req, res) => {
 //========= ADD NEW URL TO DATABASE =========//
 
 app.post("/urls", (req, res) => {
+if (req.session.user_id) {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   const userID = req.session.user_id;
-  urlDB[shortURL] = { userID, longURL };
-  
-  res.redirect("/urls");
+  urlDB[shortURL] = { 
+    userID, 
+    longURL 
+  }
+  res.redirect(`/urls/${shortURL}`);
+} else {
+  res.status(401).send("Log in to create a short URL.");
+}
 });
 
 //=============== EDIT URL ================//
 
 app.post("/urls/:shortURL", (req, res) => {
-  const longURL = req.body.newURL;
-  const shortURL = req.params.idL;
-  if (urlDB[shortURL].userID === req.session.user_id) {
-    urlDB[shortURL].longURL = longURL;
-    res.redirect(`/urls/${shortURL}`);
-  } else {
-    res.redirect("/login");
-  }
+ const userID = req.session.user_id;
+ const userUrls = usersURLs(userID, urlDB);
+ if (Object.keys(userUrls).includes(req.params.id)) {
+   const shortURL = req.params.id;
+   urlDB[shortURL].longURL = req.body.newURL;
+   res.redirect('/urls');
+ } else {
+   res.status(401).send("This is not your URL. Sign into associated account to edit this URL.")
+ }
 });
+
 //================ DELETE =================//
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -182,7 +192,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     delete urlDB[shortURL];
     red.redirect('/urls');
   } else {
-    res.status(401).send("This is not your URL. Sign into associated account to delete this shortURL.")
+    res.status(401).send("This is not your URL. Sign into associated account to delete this URL.")
   }
 });
 
