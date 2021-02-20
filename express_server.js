@@ -112,27 +112,24 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.post("/register", (req, res) => {
-  const { body: { email, password } } = req;
-  const rID = generateRandomString();
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const newEmail = req.body.email;
+  const newPassword = req.body.password;
 
-  if (!email || !password ) {
-    res.status(400).send("Must fill both email and password fields.");
+  if (!newEmail || !newPassword) {
+    res.status(400).send("Please include a valid email and password'")
+  } else if (emailHasUser(newEmail, userDB)) {
+    res.status(400).send("Account already associated with this email address.")
+  } else {
+    const newUserID = generateRandomString();
+    userDB[newUserID] = {
+      id: newUserID,
+      email: newEmail,
+      password: bcrypt.hashSync(newPassword, 10)
+    };
+    req.session.user_id =newUserID;
+    res.redirect("/urls");
   }
-  for (key in userDB) {
-    if (userDB[key].email === email) {
-      res.status(400).send("Email is already registered.");
-    }
-  }; 
-  userDB[rID] = {
-    id: rID,
-    password: hashedPassword,
-    email
-  };
-  req.session.user_id = rID;
-  res.redirect("/urls");
-  }
-);
+});
 
 app.post("/login", (req, res) => {
   const { body: { email, password } } = req;
