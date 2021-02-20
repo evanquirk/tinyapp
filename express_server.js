@@ -100,7 +100,7 @@ app.get("/urls/:shortURL", (req, res) => {
       };
       res.render("urls_show", templateVars);
     } else {
-      res.status(401).send("This is not your URL. Why ya gotta try and mess with it!? Please sign into the associated account to edit this URL.")
+      res.status(401).send("This is not your URL. Why ya gotta try and mess with other people's stuff!? Please sign into the associated account to edit this URL.")
     }
   } else {
     res.status(404).send("Short URL Not Found! Slow your dang fingers down and learn how to type!")
@@ -115,7 +115,7 @@ app.get("/u/:shortURL", (req, res) => {
     const longURL = urlDB[shortURL].longURL;
     res.redirect(longURL);
   } else {
-    res.status(404).send("This link cannot be found! Major bummer.")
+    res.status(404).send("This link cannot be found! Major bummer, bro.")
   }
 });
 
@@ -128,7 +128,7 @@ app.post("/register", (req, res) => {
   const newPassword = req.body.password;
 
   if (!newEmail || !newPassword) {
-    res.status(400).send("Please include a valid email and password. Or don't. I'm a website, not a cop.'")
+    res.status(400).send("If you wanna get into this hot joint, you're gonna have to include a valid email and password. Or don't. I'm a website, not a cop.")
   } else if (emailHasUser(newEmail, userDB)) {
     res.status(400).send("Account already associated with this email address. Go make a new one, they are free.")
   } else {
@@ -149,7 +149,7 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (!emailHasUser(email, userDB)) {
-    res.status(403).send("there is no account associated with this email address - so make a new one and join in on all the fun!")
+    res.status(403).send("there is no account associated with this email address - so make a new one and join in on all the fun!  ... seriously, do it.")
   } else {
     const userID = getUserByEmail(email, userDB);
     if (!bcrypt.compareSync(password, userDB[userID].password)) {
@@ -174,7 +174,7 @@ app.post("/urls", (req, res) => {
     }
     res.redirect(`/urls/${shortURL}`);
   } else {
-    res.status(401).send("Log in to create a short URL. Everybody is doing it.");
+    res.status(401).send("Log in to create a short URL - Everybody is doing it!");
   }
 });
 
@@ -189,7 +189,7 @@ app.post("/urls/:shortURL", (req, res) => {
     res.redirect('/urls');
 
   } else {
-    res.status(401).send("This is not your URL. And with that attitude, it'll never be your URL. - Sign into associated account to edit.")
+    res.status(401).send("This is not your URL. And with that attitude, it'll never be your URL. - Sign into associated account to edit your own mistakes.")
   }
 });
 
@@ -204,7 +204,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
       delete urlDB[shortURL];
       res.redirect('/urls');
     } else {
-      res.status(401).send("This is not your URL. Sign into associated account to delete this URL, you murderer.")
+      res.status(401).send("This is not your URL. Sign into associated account to have this URL 'deleted' ... you murderer.")
     };
   } else {
     res.status(404).send("Short URL Not Found! Slow your dang fingers down and learn how to type!")
