@@ -132,16 +132,18 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const { body: { email, password } } = req;
-  let user = getUserByEmail(email, userDB);
-  if (!user) {
-    res.status(400).send("Email is not recognized");
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log(userDB);
+  if (!emailHasUser(email, userDB)) {
+    res.status(403).send("there is no account associated with this email address.")
   } else {
-    if (bcrypt.compareSync(password, user.password)) {
-      req.session.user_id = user['id'];
-      res.redirect("/urls");
+    const userID = getUserByEmail(email, userDB);
+    if (!bcrypt.compareSync(password, userDB[userID].password)) {
+      res.status(403).send("Password Incorrect.")
     } else {
-      res.status(400).send("Password is not recognized");
+      req.session.user_id = userID;
+      res.redirect("/urls");
     }
   }
 });
