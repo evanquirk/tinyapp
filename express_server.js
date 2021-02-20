@@ -3,7 +3,7 @@ const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 const { urlDB, userDB } = require('./databases');
-const { generateRandomString, getUserByEmail , emailHasUser, usersURLs , cookieHasUser } = require('./helpers');
+const { generateRandomString, getUserByEmail, emailHasUser, usersURLs, cookieIsCurrentUser } = require('./helpers');
 
 const app = express();
 const PORT = 8080;
@@ -21,7 +21,7 @@ app.use(
 //==========LANDING PAGE REDIRECT ========//
 
 app.get("/", (req, res) => {
-  if (cookieHasUser(req.session.user_id, userDB)) {
+  if (cookieIsCurrentUser(req.session.user_id, userDB)) {
     res.redirect("/urls");
   } else {
     res.redirect("/login");
@@ -31,22 +31,26 @@ app.get("/", (req, res) => {
 //==============URLS INDEX===============//
 
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    urls: usersURLs(req.session.user_id, urlDB),
-    user: userDB[req.session.user_id],
-  };
-  res.render("urls_index", templateVars);
+  if (cookieIsCurrentUser(req.session.user_id, userDB)) {
+    let templateVars = {
+      urls: usersURLs(req.session.user_id, urlDB),
+      user: userDB[req.session.user_id],
+    }
+    res.render("urls_index", templateVars);
+  } else {
+    res.status(401).send("Youre not logged in, but you can do that <a href='/login'>here!</a>")
+  }
 });
 
 //==============REGISTER================//
 
 app.get("/register", (req, res) => {
-  const userID = req.session.user_id;
-  if (cookieHasUser(userID, userDB)) {
+  const cookieID = req.session.user_id;
+  if (cookieIsCurrentUser(cookieID, userDB)) {
     res.redirect("/urls");
   } else {
     let templateVars = {
-      user: userDB[userID],
+      user: userDB[cookieID],
     };
     res.render("urls_register", templateVars);
   }
@@ -55,28 +59,25 @@ app.get("/register", (req, res) => {
 //================LOGIN=================//
 
 app.get("/login", (req, res) => {
-  const userID = req.session.user_id;
-  if (cookieHasUser(userID, userDB)) {
+  const cookieID = req.session.user_id;
+  if (cookieIsCurrentUser(cookieID, userDB)) {
     res.redirect("/urls");
   } else {
-  const templateVars = {
-    user: userDB[userID]
-  };
-  res.render("urls_login", templateVars);
+    let templateVars = {
+      user: userDB[cookieID]
+    };
+    res.render("urls_login", templateVars);
   }
 });
 
 //===============NEW URL================//
 
 app.get("/urls/new", (req, res) => {
-  const userID = req.session.user_id;
-  const shortURL = req.params.shortURL
-  if (!cookieHasUser(userID, userDB)) {
+  if (!cookieIsCurrentUser(req.session.user_id, userDB)) {
     res.redirect("/login");
   } else {
-    const templateVars = {
-      user: userDB[userID],
-      shortURL,
+    let templateVars = {
+      user: userDB[req.session.user_id]
     };
     res.render("urls_new", templateVars)
   }
@@ -85,19 +86,25 @@ app.get("/urls/new", (req, res) => {
 //=========SHORT URL VIEW EDIT============//
 
 app.get("/urls/:shortURL", (req, res) => {
-  if (urlDB[req.params.shortURL]) {
-    let templateVars = {
-      shortURL: req.params.shortURL,
-      longURL: urlDB[req.params.shortURL].longURL,
-      userID: urlDB[req.params.shortURL].userID,
-      user: userDB[req.session.user_id]
-    };
-    res.render("urls_show", templateVars);
-    } else {
-      res.status(404).send("Not Found")
-    }
-  });
+  const shortURL = req.params.shortURL;
+  const cookieID = req.session.user_id;
 
+  if (cookieID === urlDB[shortURL].userID) {
+    if (urlDB[req.params.shortURL]) {
+      let templateVars = {
+        shortURL: req.params.shortURL,
+        longURL: urlDB[req.params.shortURL].longURL,
+        userID: urlDB[req.params.shortURL].userID,
+        user: userDB[req.session.user_id]
+      };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(404).send("Short URL Not Found!")
+    }
+  } else {
+    res.status(401).send("This is not your URL. Please sign into the associated account to edit this URL.")
+  }
+});
 
 //=======VISIT SHORT URL AS LINK=======//
 
@@ -126,7 +133,7 @@ app.post("/register", (req, res) => {
       email: newEmail,
       password: bcrypt.hashSync(newPassword, 10)
     };
-    req.session.user_id =newUserID;
+    req.session.user_id = newUserID;
     res.redirect("/urls");
   }
 });
@@ -136,7 +143,6 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  console.log(userDB);
   if (!emailHasUser(email, userDB)) {
     res.status(403).send("there is no account associated with this email address.")
   } else {
@@ -150,47 +156,48 @@ app.post("/login", (req, res) => {
   }
 });
 
-
 //========= ADD NEW URL TO DATABASE =========//
 
 app.post("/urls", (req, res) => {
-if (req.session.user_id) {
-  const longURL = req.body.longURL;
-  const shortURL = generateRandomString();
-  const userID = req.session.user_id;
-  urlDB[shortURL] = { 
-    userID, 
-    longURL 
+  if (req.session.user_id) {
+    const longURL = req.body.longURL;
+    const shortURL = generateRandomString();
+    const userID = req.session.user_id;
+    urlDB[shortURL] = {
+      userID,
+      longURL
+    }
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    res.status(401).send("Log in to create a short URL.");
   }
-  res.redirect(`/urls/${shortURL}`);
-} else {
-  res.status(401).send("Log in to create a short URL.");
-}
 });
 
 //=============== EDIT URL ================//
 
 app.post("/urls/:shortURL", (req, res) => {
- const userID = req.session.user_id;
- const userUrls = usersURLs(userID, urlDB);
- if (Object.keys(userUrls).includes(req.params.id)) {
-   const shortURL = req.params.id;
-   urlDB[shortURL].longURL = req.body.newURL;
-   res.redirect('/urls');
- } else {
-   res.status(401).send("This is not your URL. Sign into associated account to edit this URL.")
- }
+  const shortURL = req.params.shortURL;
+  const cookieID = req.session.user_id;
+
+  if (cookieID === urlDB[shortURL].userID) {
+    urlDB[shortURL].longURL = req.body.newURL;
+    res.redirect('/urls');
+
+  } else {
+    res.status(401).send("This is not your URL. Sign into associated account to edit this URL.")
+  }
 });
 
 //================ DELETE =================//
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userID = req.session.user_id;
-  const userUrls = usersURLs(userID, urlDB);
-  if (Object.keys(userUrls).includes(req.params.shortURL)) {
-    const shortURL = req.params.shortURL;
+  const shortURL = req.params.shortURL;
+  const cookieID = req.session.user_id;
+
+  if (cookieID === urlDB[shortURL].userID) {
     delete urlDB[shortURL];
-    red.redirect('/urls');
+    res.redirect('/urls');
+
   } else {
     res.status(401).send("This is not your URL. Sign into associated account to delete this URL.")
   }
