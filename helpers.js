@@ -37,7 +37,7 @@ const usersURLs = (id, urlDB) => {
 }
 
 //Check to see if the current cookie has a user associated with it.
-const cookieHasUser = (cookie, userDB) => {
+const cookieIsCurrentUser = (cookie, userDB) => {
   for (const userKey in userDB) {
     if (cookie === userKey) {
       return true;
@@ -46,4 +46,4 @@ const cookieHasUser = (cookie, userDB) => {
 };
 
 
-module.exports = { generateRandomString, emailHasUser, getUserByEmail, usersURLs, cookieHasUser };
+module.exports = { generateRandomString, emailHasUser, getUserByEmail, usersURLs, cookieIsCurrentUser };
