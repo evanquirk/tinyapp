@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 const { urlDB, userDB } = require('./databases');
 const { generateRandomString, getUserByEmail, emailHasUser, usersURLs, cookieIsCurrentUser } = require('./helpers');
-const e = require("express");
 
 const app = express();
 const PORT = 8080;
@@ -20,6 +19,7 @@ app.use(
 );
 
 //==========LANDING PAGE REDIRECT ========//
+//checks if user is signed in. If yes, go to URL list, if no, redirect to login.
 
 app.get("/", (req, res) => {
   if (cookieIsCurrentUser(req.session.user_id, userDB)) {
@@ -30,10 +30,11 @@ app.get("/", (req, res) => {
 });
 
 //==============URLS INDEX===============//
+//checks if user is signed in. If yes, render urls list with user's URL list. If not signed in, 401 status and redirect to login.
 
 app.get("/urls", (req, res) => {
   if (cookieIsCurrentUser(req.session.user_id, userDB)) {
-    let templateVars = {
+    const templateVars = {
       urls: usersURLs(req.session.user_id, urlDB),
       user: userDB[req.session.user_id],
     }
@@ -44,13 +45,14 @@ app.get("/urls", (req, res) => {
 });
 
 //==============REGISTER================//
+//check if user is signed in. If yes, redirect to urls page. If no, pass through to register page.
 
 app.get("/register", (req, res) => {
   const cookieID = req.session.user_id;
   if (cookieIsCurrentUser(cookieID, userDB)) {
     res.redirect("/urls");
   } else {
-    let templateVars = {
+    const templateVars = {
       user: userDB[cookieID],
     };
     res.render("urls_register", templateVars);
@@ -58,13 +60,14 @@ app.get("/register", (req, res) => {
 });
 
 //================LOGIN=================//
+//check if user is logged in. If yes, redirect to login. If no, pass to login page.
 
 app.get("/login", (req, res) => {
   const cookieID = req.session.user_id;
   if (cookieIsCurrentUser(cookieID, userDB)) {
     res.redirect("/urls");
   } else {
-    let templateVars = {
+    const templateVars = {
       user: userDB[cookieID]
     };
     res.render("urls_login", templateVars);
@@ -72,12 +75,13 @@ app.get("/login", (req, res) => {
 });
 
 //===============NEW URL================//
+//check if user is logged in. If no, redirect to login. If yes, load new url page.
 
 app.get("/urls/new", (req, res) => {
   if (!cookieIsCurrentUser(req.session.user_id, userDB)) {
     res.redirect("/login");
   } else {
-    let templateVars = {
+    const templateVars = {
       user: userDB[req.session.user_id]
     };
     res.render("urls_new", templateVars)
@@ -85,6 +89,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 //=========SHORT URL VIEW EDIT============//
+//If user is logged in, and url is assigned to users login id, return url edit page. If not user's url, get 401 status.
+//If url isn't in database, return 404.
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -92,7 +98,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   if (urlDB[req.params.shortURL]) {
     if (cookieID === urlDB[shortURL].userID) {
-      let templateVars = {
+      const templateVars = {
         shortURL: req.params.shortURL,
         longURL: urlDB[req.params.shortURL].longURL,
         userID: urlDB[req.params.shortURL].userID,
@@ -108,9 +114,10 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 //=======VISIT SHORT URL AS LINK=======//
+//If link is found in database, load page for anyone to view. If link is not found, send 404 error.
 
 app.get("/u/:shortURL", (req, res) => {
-  if (req.params.shortURL === urlDB[req.params.shortURL]) {
+  if (Object.keys(urlDB).includes(req.params.shortURL)) {
     const shortURL = req.params.shortURL;
     const longURL = urlDB[shortURL].longURL;
     res.redirect(longURL);
@@ -128,7 +135,7 @@ app.post("/register", (req, res) => {
   const newPassword = req.body.password;
 
   if (!newEmail || !newPassword) {
-    res.status(400).send("If you wanna get into this hot joint, you're gonna have to include a valid email and password. Or don't. I'm a website, not a cop.")
+    res.status(400).send("If you wanna get into this hot joint, you're gonna have to include a valid email and password!")
   } else if (emailHasUser(newEmail, userDB)) {
     res.status(400).send("Account already associated with this email address. Go make a new one, they are free.")
   } else {
